@@ -1,0 +1,93 @@
+@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap");
+
+* {
+  box-sizing: border-box;
+  font-family: "DotGothic16", "Press Start 2P", "Microsoft YaHei", sans-serif !important;
+  image-rendering: pixelated;
+}
+
+body,
+html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: #1a1a1a;
+  color: #fff;
+  overflow: hidden;
+}
+
+#root {
+  height: 100%;
+}
+
+input,
+button,
+select,
+textarea {
+  font-family: inherit;
+  outline: none;
+}
+
+.zh-text {
+  font-family: "DotGothic16", sans-serif !important;
+  font-weight: normal;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #385848;
+  border: 2px solid #fff;
+}
+
+.game-image-frame {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 4 / 3;
+  max-height: clamp(180px, 40vh, 320px);
+  background-color: #000;
+  border: 3px solid #fff;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+}
+
+.game-image-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.2) 0px,
+    rgba(0, 0, 0, 0.2) 1px,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, 0) 3px
+  );
+  opacity: 0.2;
+  mix-blend-mode: overlay;
+}
+
+.game-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  display: block;
+}
+
+.game-image-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  alignItems: center;
+  justifyContent: center;
+  background-color: #000;
+}
