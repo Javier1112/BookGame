@@ -31,7 +31,7 @@ const MAX_CONCURRENT_REQUESTS = Math.max(
 );
 const RETRY_BACKOFF_MS = [1000, 2000, 4000];
 const IMAGE_STYLE_PREFIX =
-  "16位复古像素艺术，超级任天堂SNES时代风格，清晰的像素块，边缘锐利无抗锯齿，标志性的有限色彩效果，复古游戏美术，";
+  "8位复古的像素艺术，SNES时代风格，边缘锐利无抗锯齿，标志性的有限色彩效果，复古游戏画面，";
 
 interface ZhipuStoryResponse {
   character_name: string;

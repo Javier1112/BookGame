@@ -17,6 +17,35 @@ npm install
 
 > 首次安装会生成 `package-lock.json`，请一并提交以锁定依赖版本。
 
+## 一键准备（推荐）
+
+把“安装依赖 + 生成 `.env.local` + 类型检查”整合成一次性脚本：
+
+```bash
+node setup.mjs
+```
+
+也可以用 npm 脚本：
+
+```bash
+npm run setup
+```
+
+可选参数：
+- `node setup.mjs --install-only`：只安装依赖并生成 `.env.local`
+- `node setup.mjs --no-typecheck`：跳过类型检查
+
+> 通过 `npm run setup` 传参时需要 `--`：`npm run setup -- --no-typecheck`
+
+### Windows (PowerShell) 说明
+
+如果你在 PowerShell 里执行 `npm`/`npx` 提示“禁止运行脚本（npm.ps1）”，请改用 `npm.cmd`/`npx.cmd`（或调整 PowerShell ExecutionPolicy）：
+
+```bash
+npm.cmd install
+npm.cmd run dev
+```
+
 ## 环境变量与 API Key 存储
 
 1. 在项目根目录创建 `.env.local`（已列入 `.gitignore`），可从 `.env.example` 复制并修改：
@@ -36,6 +65,11 @@ npm install
    ZHIPU_IMAGE_WATERMARK_ENABLED=false
    ZHIPU_IMAGE_TIMEOUT_MS=120000
    ZHIPU_IMAGE_CONTENT_FILTER_LEVEL=3
+   ZHIPU_MAX_CONCURRENT=2          # 同时请求上游的最大并发
+   LOG_DIR=server/logs            # 可选：服务端日志目录
+   LOG_FILE=server/logs/server.jsonl # 可选：服务端日志文件
+   VITE_HOST=localhost            # 可选：Vite 监听地址（需要外网访问可设 0.0.0.0）
+   VITE_PORT=5173                 # 可选：Vite 端口
    ```
 
 2. 服务端启动时会先加载 `.env`，再用 `.env.local` 覆盖，统一通过 `server/config/env.ts` 校验并注入，避免在代码里直接访问 `process.env`。
@@ -54,6 +88,10 @@ npm install
 ```bash
 npm run dev
 ```
+
+服务端健康检查：
+- `GET http://localhost:8788/health`
+- `GET http://localhost:8788/api/health`
 
 - `npm run dev:client`：仅运行 Vite（默认端口 5173）
 - `npm run dev:server`：仅运行 API 代理（默认端口 8788）
