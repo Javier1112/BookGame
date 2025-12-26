@@ -1,69 +1,13 @@
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SHNU Playbrary - 上海师大图书馆沉浸式书籍游戏</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DotGothic16&display=swap" rel="stylesheet">
-    <style>
-        /* Apply the pixel/bitmap font globally to all elements */
-        * {
-            box-sizing: border-box;
-            font-family: 'DotGothic16', 'Press Start 2P', "Microsoft YaHei", sans-serif !important;
-            image-rendering: pixelated; /* Enhances the retro feel for images */
-        }
-
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            background-color: #1a1a1a;
-            color: #fff;
-            overflow: hidden;
-        }
-
-        #root {
-            height: 100%;
-        }
-
-        /* Ensure input and button elements inherit the correct font and have consistent styling */
-        input, button, select, textarea {
-            font-family: inherit;
-            outline: none;
-        }
-
-        /* Specific class for components that need to ensure they have the pixel look */
-        .zh-text {
-            font-family: 'DotGothic16', sans-serif !important;
-            font-weight: normal;
-        }
-
-        /* Retro scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #1a1a1a;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #385848;
-            border: 2px solid #fff;
-        }
-    </style>
-<script type="importmap">
-{
-  "imports": {
-    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
-  }
-}
-</script>
-</head>
-<body>
+  </head>
+  <body>
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
-</body>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
