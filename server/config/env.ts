@@ -49,7 +49,7 @@ export const createServerConfig = (): ServerConfig => {
 
   if (!zhipuTextApiKey || !imageApiKey) {
     throw new Error(
-      "API Key 未配置。请设置 ZHIPU_TEXT_API_KEY 与 ZHIPU_IMAGE_API_KEY。"
+      "API Key 未配置。请先设置 ZHIPU_TEXT_API_KEY 与 ZHIPU_IMAGE_API_KEY。"
     );
   }
 

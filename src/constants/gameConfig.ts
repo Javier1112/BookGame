@@ -1,1 +1,1 @@
-export const MAX_ROUNDS = 5;
+export const MAX_ROUNDS = 4;

@@ -15,6 +15,9 @@ const App = () => {
     progress,
     loadingMessage,
     error,
+    lastImageUrl,
+    displayedSceneDescription,
+    revealedOptions,
     startGame,
     chooseOption,
     resetGame
@@ -33,6 +36,9 @@ const App = () => {
     <GameScreen
       state={gameState}
       loading={loading}
+      lastImageUrl={lastImageUrl}
+      displayedSceneDescription={displayedSceneDescription}
+      revealedOptions={revealedOptions}
       onRestart={resetGame}
       onChoose={chooseOption}
       error={error}

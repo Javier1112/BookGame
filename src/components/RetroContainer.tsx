@@ -4,6 +4,7 @@ const RetroContainer = ({ children }: PropsWithChildren) => (
   <div
     style={{
       maxWidth: "500px",
+      width: "min(500px, 100%)",
       margin: "10px auto",
       padding: "15px",
       border: "4px solid #fff",
@@ -14,7 +15,8 @@ const RetroContainer = ({ children }: PropsWithChildren) => (
       flexDirection: "column",
       height: "calc(100vh - 20px)",
       position: "relative",
-      overflowY: "auto"
+      overflowY: "scroll",
+      scrollbarGutter: "stable"
     }}
   >
     {children}

@@ -6,6 +6,9 @@ import { MAX_ROUNDS } from "@/constants/gameConfig";
 interface GameScreenProps {
   state: GameState;
   loading: boolean;
+  lastImageUrl: string | null;
+  displayedSceneDescription: string;
+  revealedOptions: number;
   onRestart: () => void;
   onChoose: (option: GameOption) => void;
   error: string | null;
@@ -14,21 +17,38 @@ interface GameScreenProps {
 const GameScreen = ({
   state,
   loading,
+  lastImageUrl,
+  displayedSceneDescription,
+  revealedOptions,
   onRestart,
   onChoose,
   error
 }: GameScreenProps) => {
+  const imageToShow = loading ? lastImageUrl ?? state.imageUrl : state.imageUrl;
+  const placeholderOptions: GameOption[] = [
+    { label: "A", text: "" },
+    { label: "B", text: "" },
+    { label: "C", text: "" }
+  ];
+  const optionsToRender =
+    loading || !state.options?.length ? placeholderOptions : state.options;
+  const revealCount = loading ? 0 : revealedOptions;
+
   const renderChoices = () => {
-    if (state.isGameOver || loading) {
+    if (state.isGameOver) {
       return null;
     }
 
     return (
       <div style={{ display: "grid", gap: "5px" }}>
-        {(state.options ?? []).map((option, idx) => (
+        {optionsToRender.map((option, idx) => {
+          const isVisible = idx < revealCount;
+          const isDisabled = loading || !isVisible;
+          return (
           <button
             key={`${option.label}-${idx}`}
             onClick={() => onChoose(option)}
+            disabled={isDisabled}
             className="zh-text option-dynamic"
             style={{
               textAlign: "center",
@@ -37,32 +57,39 @@ const GameScreen = ({
               backgroundColor: "#f5f5f5",
               color: "#000",
               fontSize: "12px",
-              cursor: "pointer",
+              cursor: isDisabled ? "default" : "pointer",
               boxShadow: "2px 2px 0 rgba(0,0,0,0.2)",
               animationDelay: `${idx * 0.8}s`
             }}
           >
             <span
-              style={{ fontWeight: "bold", marginRight: "5px", color: "#ee1515" }}
+              style={{
+                fontWeight: "bold",
+                marginRight: "5px",
+                color: "#ee1515",
+                opacity: isVisible ? 1 : 0
+              }}
             >
               {option.label}.
             </span>
-            <span>{option.text}</span>
+            <span style={{ opacity: isVisible ? 1 : 0 }}>
+              {option.text}
+            </span>
           </button>
-        ))}
+        )})}
       </div>
     );
   };
 
   const renderEnding = () => {
     if (!state.isGameOver) {
-      return state.sceneDescription;
+      return displayedSceneDescription;
     }
 
     return (
       <div style={{ textAlign: "center", padding: "10px" }}>
         <p className="zh-text" style={{ marginBottom: "25px" }}>
-          {state.sceneDescription}
+          {displayedSceneDescription}
         </p>
 
         <div
@@ -223,13 +250,14 @@ const GameScreen = ({
           }}
         >
           <div className="game-image-frame">
+            {imageToShow ? (
+              <img src={imageToShow} alt="Scene" className="game-image" />
+            ) : null}
             {loading ? (
               <div className="game-image-loading">
                 <div className="spinner" />
               </div>
-            ) : (
-              <img src={state.imageUrl} alt="Scene" className="game-image" />
-            )}
+            ) : null}
           </div>
         </div>
 
@@ -292,7 +320,9 @@ const GameScreen = ({
               style={{
                 marginTop: "12px",
                 color: "#e53935",
-                fontSize: "14px"
+                fontSize: "14px",
+                boxShadow: "0px 4px 12px 0px rgba(0, 0, 0, 0.15)",
+                textAlign: "center"
               }}
             >
               {error}

@@ -13,9 +13,15 @@ export const useGameEngine = () => {
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loadingMsgIdx, setLoadingMsgIdx] = useState(0);
+  const [lastImageUrl, setLastImageUrl] = useState<string | null>(null);
+  const [displayedSceneDescription, setDisplayedSceneDescription] = useState("");
+  const [revealedOptions, setRevealedOptions] = useState(0);
+  const [isTypingComplete, setIsTypingComplete] = useState(false);
   const requestIdRef = useRef(0);
   const inFlightRef = useRef(false);
   const lastActionRef = useRef(0);
+  const typingTimeoutRef = useRef<number | null>(null);
+  const revealTimeoutRef = useRef<number | null>(null);
   const REQUEST_DEBOUNCE_MS = 800;
 
   useEffect(() => {
@@ -62,6 +68,93 @@ export const useGameEngine = () => {
     return () => window.clearInterval(timer);
   }, [loading]);
 
+  useEffect(() => {
+    if (!gameState?.sceneDescription) {
+      setDisplayedSceneDescription("");
+      setIsTypingComplete(false);
+      return;
+    }
+
+    if (typingTimeoutRef.current) {
+      window.clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+
+    const fullText = gameState.sceneDescription;
+    let index = 0;
+    setDisplayedSceneDescription("");
+    setIsTypingComplete(false);
+
+    const step = () => {
+      index += 1;
+      setDisplayedSceneDescription(fullText.slice(0, index));
+
+      if (index >= fullText.length) {
+        setIsTypingComplete(true);
+        typingTimeoutRef.current = null;
+        return;
+      }
+
+      const char = fullText[index - 1] ?? "";
+      const delay =
+        /[。！？!?]/.test(char) ? 220 : /[，,；;]/.test(char) ? 120 : 35;
+      typingTimeoutRef.current = window.setTimeout(step, delay);
+    };
+
+    typingTimeoutRef.current = window.setTimeout(step, 60);
+
+    return () => {
+      if (typingTimeoutRef.current) {
+        window.clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+    };
+  }, [gameState?.sceneDescription]);
+
+  useEffect(() => {
+    if (!gameState || loading || gameState.isGameOver) {
+      setRevealedOptions(0);
+      return;
+    }
+
+    if (!isTypingComplete) {
+      setRevealedOptions(0);
+      return;
+    }
+
+    if (revealTimeoutRef.current) {
+      window.clearTimeout(revealTimeoutRef.current);
+      revealTimeoutRef.current = null;
+    }
+
+    const totalOptions = gameState.options?.length ?? 0;
+    if (totalOptions === 0) {
+      setRevealedOptions(0);
+      return;
+    }
+
+    let index = 0;
+    setRevealedOptions(0);
+    const step = () => {
+      index += 1;
+      setRevealedOptions(index);
+      if (index >= totalOptions) {
+        revealTimeoutRef.current = null;
+        return;
+      }
+      revealTimeoutRef.current = window.setTimeout(step, 120);
+    };
+
+    revealTimeoutRef.current = window.setTimeout(step, 60);
+
+    return () => {
+      if (revealTimeoutRef.current) {
+        window.clearTimeout(revealTimeoutRef.current);
+        revealTimeoutRef.current = null;
+      }
+    };
+  }, [gameState, isTypingComplete, loading]);
+
   const executeTurn = useCallback(
     async (payload: GameTurnRequest) => {
       const now = Date.now();
@@ -70,6 +163,13 @@ export const useGameEngine = () => {
       }
       inFlightRef.current = true;
       lastActionRef.current = now;
+      setRevealedOptions(0);
+      setIsTypingComplete(false);
+      if (revealTimeoutRef.current) {
+        window.clearTimeout(revealTimeoutRef.current);
+        revealTimeoutRef.current = null;
+      }
+      setLastImageUrl(gameState?.imageUrl ?? null);
       const requestId = requestIdRef.current + 1;
       requestIdRef.current = requestId;
       setLoading(true);
@@ -105,6 +205,11 @@ export const useGameEngine = () => {
           return;
         }
 
+        if (gameState) {
+          setIsTypingComplete(true);
+          setRevealedOptions(gameState.options?.length ?? 0);
+        }
+
         console.error(err);
         const message =
           err instanceof Error
@@ -131,7 +236,7 @@ export const useGameEngine = () => {
         }
       }
     },
-    []
+    [gameState]
   );
 
   const startGame = useCallback(
@@ -141,11 +246,13 @@ export const useGameEngine = () => {
         return;
       }
 
+      setLastImageUrl(null);
       executeTurn({
         bookTitle: sanitized,
         round: 0,
         choice: null,
-        history: []
+        history: [],
+        protagonistName: null
       });
     },
     [executeTurn, loading]
@@ -170,7 +277,8 @@ export const useGameEngine = () => {
         bookTitle: gameState.bookTitle,
         round: gameState.round,
         choice: option.text,
-        history: updatedHistory
+        history: updatedHistory,
+        protagonistName: gameState.characterName
       });
     },
     [executeTurn, gameState, loading]
@@ -182,7 +290,19 @@ export const useGameEngine = () => {
     setError(null);
     setProgress(0);
     setLoading(false);
+    setLastImageUrl(null);
+    setDisplayedSceneDescription("");
+    setRevealedOptions(0);
+    setIsTypingComplete(false);
     inFlightRef.current = false;
+    if (typingTimeoutRef.current) {
+      window.clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+    if (revealTimeoutRef.current) {
+      window.clearTimeout(revealTimeoutRef.current);
+      revealTimeoutRef.current = null;
+    }
   }, []);
 
   return {
@@ -191,6 +311,9 @@ export const useGameEngine = () => {
     progress,
     loadingMessage: LOADING_MESSAGES[loadingMsgIdx],
     error,
+    lastImageUrl,
+    displayedSceneDescription,
+    revealedOptions,
     startGame,
     chooseOption,
     resetGame

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { Router } from "express";
+import { Router, type Request } from "express";
 import type { GameHistoryEntry, GameTurnRequest } from "../../shared/game.js";
 import { createZhipuGameService } from "../services/zhipuService.js";
 import { logJson } from "../utils/logger.js";
@@ -36,6 +36,7 @@ const validatePayload = (body: unknown): GameTurnRequest => {
   const bookTitle = (body as Record<string, unknown>).bookTitle;
   const round = Number((body as Record<string, unknown>).round ?? 0);
   const choice = (body as Record<string, unknown>).choice;
+  const protagonistName = (body as Record<string, unknown>).protagonistName;
   const history = sanitizeHistory(
     (body as Record<string, unknown>).history ?? []
   );
@@ -48,7 +49,11 @@ const validatePayload = (body: unknown): GameTurnRequest => {
     bookTitle: bookTitle.trim(),
     round: Number.isNaN(round) ? 0 : Math.max(0, round),
     choice: typeof choice === "string" ? choice : null,
-    history
+    history,
+    protagonistName:
+      typeof protagonistName === "string" && protagonistName.trim()
+        ? protagonistName.trim()
+        : null
   };
 };
 
@@ -61,8 +66,29 @@ export const createGameRouter = (
     zhipuTextApiKey,
     imageApiKey
   );
+  const maxInFlightPerClient = Math.max(
+    1,
+    Number(process.env.PLAY_TURN_MAX_INFLIGHT_PER_IP ?? 1)
+  );
+  const inFlightByClient = new Map<string, number>();
+
+  const getClientKey = (req: Request) => {
+    const forwardedFor =
+      typeof req.headers["x-forwarded-for"] === "string"
+        ? req.headers["x-forwarded-for"].split(",")[0]?.trim()
+        : null;
+    return forwardedFor || req.ip || req.socket.remoteAddress || "unknown";
+  };
 
   router.post("/play-turn", async (req, res) => {
+    const clientKey = getClientKey(req);
+    const activeCount = inFlightByClient.get(clientKey) ?? 0;
+    if (activeCount >= maxInFlightPerClient) {
+      logJson("warn", "play_turn_rejected_busy", { clientKey, activeCount });
+      return res.status(429).send("请求过于频繁：上一回合仍在生成中，请稍后再试。");
+    }
+    inFlightByClient.set(clientKey, activeCount + 1);
+
     const requestId = randomUUID();
     const startedAt = Date.now();
     try {
@@ -99,6 +125,11 @@ export const createGameRouter = (
       res.status(500).send(
         error instanceof Error ? error.message : "故事生成失败，请稍后再试。"
       );
+    } finally {
+      const current = inFlightByClient.get(clientKey) ?? 0;
+      const next = Math.max(0, current - 1);
+      if (next === 0) inFlightByClient.delete(clientKey);
+      else inFlightByClient.set(clientKey, next);
     }
   });
 

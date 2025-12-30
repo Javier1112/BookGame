@@ -14,6 +14,7 @@ export interface GameTurnRequest {
   round: number;
   choice: string | null;
   history: GameHistoryEntry[];
+  protagonistName?: string | null;
 }
 
 export interface GameTurnResponse {

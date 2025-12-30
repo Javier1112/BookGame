@@ -55,6 +55,8 @@ npm.cmd run dev
    ZHIPU_STORY_MODEL=glm-4.6v-flash
    ZHIPU_STORY_TIMEOUT_MS=120000
    ZHIPU_TEMPERATURE=0.7
+   ZHIPU_SCENE_MAX_CHARS=420          # 文生文：scene_description 最大字数（服务端会截断+提示词约束）
+   ZHIPU_OPTION_TEXT_MAX_CHARS=15     # 文生文：每个选项 text 最大字数（服务端会截断+提示词约束）
    ZHIPU_IMAGE_API_KEY=sk-xxx  # 文生图，不要加 "Bearer " 前缀
    API_PORT=8788
    ALLOWED_ORIGINS=http://localhost:5173
@@ -62,6 +64,7 @@ npm.cmd run dev
    # 图像生成（智谱 CogView-3-Flash 在线 API）
    ZHIPU_IMAGE_MODEL=cogview-3-flash
    ZHIPU_IMAGE_SIZE=896x672
+   ZHIPU_IMAGE_STYLE_PREFIX=8-bit复古的SNES时代风格  # 文生图：会自动拼到 image_prompt 前面做统一画风
    ZHIPU_IMAGE_WATERMARK_ENABLED=false
    ZHIPU_IMAGE_TIMEOUT_MS=120000
    ZHIPU_IMAGE_CONTENT_FILTER_LEVEL=3
@@ -80,6 +83,29 @@ npm.cmd run dev
 - `VITE_API_BASE_URL` 指向部署好的后端（如 `https://api.yourdomain.com`）
 - 同时将该域名加入 `ALLOWED_ORIGINS`，以便 CORS 放行
 - 本地开发如果 Vite 端口可能变化（5173 被占用时会自动换端口），可把 `ALLOWED_ORIGINS` 设为 `http://localhost`（不写端口）以放行所有 localhost 端口
+
+## 生成参数
+
+### 文生文（剧情/选项）
+
+- **剧情字数上限**：`ZHIPU_SCENE_MAX_CHARS`  
+  - 生效位置：`server/services/zhipuService.ts`（`SCENE_DESCRIPTION_MAX_CHARS`，用于提示词约束 + 服务端截断）
+- **选项文字上限**：`ZHIPU_OPTION_TEXT_MAX_CHARS`  
+  - 生效位置：`server/services/zhipuService.ts`（`OPTION_TEXT_MAX_CHARS`，用于提示词约束 + 服务端截断）
+- **选项规则 Prompt（A/B/C 的要求）**：  
+  - 生效位置：`server/services/zhipuService.ts` 的 `fetchStory()` 里 `system` 提示词（包含“必须 3 个选项、互斥、动词开头、禁止空泛选项”等规则）
+- **主角强制一致（角色锚定）**：  
+  - 前端会把 `protagonistName` 带回服务端；服务端会在 prompt 里强约束并在不一致时修复  
+  - 生效位置：`shared/game.ts`（请求字段）、`server/routes/game.ts`（解析字段）、`server/services/zhipuService.ts`（`protagonistRule` / `ensureProtagonist`）
+
+### 文生图（插画）
+
+- **文生图 Prompt 组成**：`最终 prompt = ZHIPU_IMAGE_STYLE_PREFIX + story.image_prompt`  
+  - 生效位置：`server/services/zhipuService.ts` 的 `applyImageStyle()`（会把统一画风前缀拼到模型返回的 `image_prompt` 前）
+- **默认画风前缀**：`ZHIPU_IMAGE_STYLE_PREFIX`  
+  - 生效位置：`server/services/zhipuService.ts`（`IMAGE_STYLE_PREFIX`）
+- **图片尺寸/模型**：`ZHIPU_IMAGE_SIZE`、`ZHIPU_IMAGE_MODEL`  
+  - 生效位置：`server/services/zhipuService.ts` 的 `fetchImageUrl()`（请求参数 `size` / `model`）
 
 ## 运行
 
@@ -147,7 +173,7 @@ npm run build
 
 【项目介绍】
 1.书名即关卡：用户可以从预设的书籍（如《明朝那些事儿》、《红楼梦》等）中选择，也可以输入任何感兴趣的书名。
-2.动态剧情生成：利用开源多模态模型，根据书名自动生成一个为期 5 个回合 的互动冒险故事。AI 会模仿原著作者的文风（如鲁迅风、曹雪芹风等），为用户分配一个原著中的角色身份。
+2.动态剧情生成：利用开源多模态模型，根据书名自动生成一个为期 4 个回合 的互动冒险故事。AI 会模仿原著作者的文风（如鲁迅风、曹雪芹风等），为用户分配一个原著中的角色身份。
 3.多分支决策：每个回合都会面临三个不同的行动选项（A/B/C），用户的每一个选择都会改变后续剧情的发展。
 4.AI 绘图：利用文生图技术，根据当前剧情动态生成 8-bit 复古像素风格 的场景插画
 5.画风设计：整体 UI 采用了复古游戏（如 Pokemon 或 SNES 时代）的界面设计，包含像素字体、跳动的文字动画和具有颗粒感的视觉滤镜。
