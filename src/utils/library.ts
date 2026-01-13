@@ -8,5 +8,5 @@ export const buildLibraryLink = (bookTitle: string) => {
   }
 
   const search = encodeURIComponent(bookTitle);
-  return `https://findshnu.libsp.cn/#/searchList?searchKeyword=${search}`;
+  return `https://ss.zhizhen.com/s?sw=${search}`;
 };
