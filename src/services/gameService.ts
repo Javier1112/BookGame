@@ -1,11 +1,22 @@
 import type { GameTurnRequest, GameTurnResponse } from "@shared/game";
 
 const normalizeBaseUrl = (url: string | undefined) => {
-  if (!url) {
+  const trimmed = (url ?? "").trim();
+  if (!trimmed) {
     return "";
   }
 
-  return url.endsWith("/") ? url.slice(0, -1) : url;
+  const normalized = trimmed.endsWith("/") ? trimmed.slice(0, -1) : trimmed;
+
+  if (normalized.startsWith("http://") || normalized.startsWith("https://")) {
+    return normalized;
+  }
+
+  if (normalized.startsWith("/")) {
+    return normalized;
+  }
+
+  return `http://${normalized}`;
 };
 
 const API_BASE_URL = normalizeBaseUrl(import.meta.env.VITE_API_BASE_URL);
