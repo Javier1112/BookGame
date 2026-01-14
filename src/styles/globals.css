@@ -78,9 +78,14 @@ textarea {
 .game-image {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   image-rendering: pixelated;
   display: block;
+}
+
+.pixelart {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 
 .game-image-loading {

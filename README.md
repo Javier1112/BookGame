@@ -52,27 +52,28 @@ npm.cmd run dev
 
    ```bash
    ZHIPU_TEXT_API_KEY=your-zhipu-text-key
-   ZHIPU_STORY_MODEL=glm-4.6v-flash
+   ZHIPU_STORY_MODEL=glm-4.5-flash
    ZHIPU_STORY_TIMEOUT_MS=120000
    ZHIPU_TEMPERATURE=0.7
    ZHIPU_SCENE_MAX_CHARS=420          # 文生文：scene_description 最大字数（服务端会截断+提示词约束）
    ZHIPU_OPTION_TEXT_MAX_CHARS=15     # 文生文：每个选项 text 最大字数（服务端会截断+提示词约束）
-   ZHIPU_IMAGE_API_KEY=sk-xxx  # 文生图，不要加 "Bearer " 前缀
+   ZHIPU_IMAGE_API_KEY=sk-xxx # 文生图，不要加 "Bearer " 前缀
    API_PORT=8788
-   ALLOWED_ORIGINS=http://localhost:5173
-   VITE_API_BASE_URL=http://localhost:8788   # 前端访问后端 API 的地址
+   ALLOWED_ORIGINS=http://111.186.65.218:5173,http://localhost:5173
+   VITE_API_BASE_URL=http://111.186.65.218:8788 # 前端访问后端 API 的地址
    # 图像生成（智谱 CogView-3-Flash 在线 API）
    ZHIPU_IMAGE_MODEL=cogview-3-flash
-   ZHIPU_IMAGE_SIZE=896x672
+   ZHIPU_IMAGE_SIZE=1280x960
    ZHIPU_IMAGE_STYLE_PREFIX=8-bit复古的SNES时代风格  # 文生图：会自动拼到 image_prompt 前面做统一画风
    ZHIPU_IMAGE_WATERMARK_ENABLED=false
    ZHIPU_IMAGE_TIMEOUT_MS=120000
    ZHIPU_IMAGE_CONTENT_FILTER_LEVEL=3
-   ZHIPU_MAX_CONCURRENT=2          # 同时请求上游的最大并发
-   LOG_DIR=server/logs            # 可选：服务端日志目录
-   LOG_FILE=server/logs/server.jsonl # 可选：服务端日志文件
-   VITE_HOST=localhost            # 可选：Vite 监听地址（需要外网访问可设 0.0.0.0）
-   VITE_PORT=5173                 # 可选：Vite 端口
+   ZHIPU_MAX_CONCURRENT=2 # 同时请求上游的最大并发
+   LOG_DIR=server/logs            # ??????????
+   LOG_FILE=server/logs/server.jsonl # ??????????
+   LOG_RETENTION_DAYS=15 # ???????????? 15 ??
+   VITE_HOST=0.0.0.0 # 可选：Vite 监听地址（需要外网访问可设 0.0.0.0）
+   VITE_PORT=5173 # 可选：Vite 端口
    ```
 
 2. 服务端启动时会先加载 `.env`，再用 `.env.local` 覆盖，统一通过 `server/config/env.ts` 校验并注入，避免在代码里直接访问 `process.env`。
@@ -83,6 +84,11 @@ npm.cmd run dev
 - `VITE_API_BASE_URL` 指向部署好的后端（如 `https://api.yourdomain.com`）
 - 同时将该域名加入 `ALLOWED_ORIGINS`，以便 CORS 放行
 - 本地开发如果 Vite 端口可能变化（5173 被占用时会自动换端口），可把 `ALLOWED_ORIGINS` 设为 `http://localhost`（不写端口）以放行所有 localhost 端口
+
+## 日志保留策略
+
+- 默认保留 15 天，配置项：`LOG_RETENTION_DAYS`。
+- 服务端每 24 小时执行一次清理：`server.jsonl` 会裁剪掉过期日志行，其他历史 `.jsonl` 文件会按修改时间删除。
 
 ## 生成参数
 
@@ -110,7 +116,6 @@ npm.cmd run dev
 ## 运行
 
 开发模式会同时启动 React 前端与本地 API 代理：
-
 ```bash
 npm run dev
 ```

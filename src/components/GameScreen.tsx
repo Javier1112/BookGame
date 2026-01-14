@@ -6,6 +6,7 @@ import { MAX_ROUNDS } from "@/constants/gameConfig";
 interface GameScreenProps {
   state: GameState;
   loading: boolean;
+  interactionLocked: boolean;
   lastImageUrl: string | null;
   displayedSceneDescription: string;
   revealedOptions: number;
@@ -17,6 +18,7 @@ interface GameScreenProps {
 const GameScreen = ({
   state,
   loading,
+  interactionLocked,
   lastImageUrl,
   displayedSceneDescription,
   revealedOptions,
@@ -43,7 +45,7 @@ const GameScreen = ({
       <div style={{ display: "grid", gap: "5px" }}>
         {optionsToRender.map((option, idx) => {
           const isVisible = idx < revealCount;
-          const isDisabled = loading || !isVisible;
+          const isDisabled = loading || interactionLocked || !isVisible;
           return (
           <button
             key={`${option.label}-${idx}`}
@@ -117,7 +119,8 @@ const GameScreen = ({
             className="zh-text"
             style={{ fontSize: "16px", margin: 0, color: "#444" }}
           >
-            真相就在上海师范大学图书馆的原著中。
+            原著比游戏更加精彩！
+            快来上海师范大学图书馆借阅吧。
           </p>
         </div>
 
@@ -251,7 +254,7 @@ const GameScreen = ({
         >
           <div className="game-image-frame">
             {imageToShow ? (
-              <img src={imageToShow} alt="Scene" className="game-image" />
+              <img src={imageToShow} alt="Scene" className="game-image pixelart" />
             ) : null}
             {loading ? (
               <div className="game-image-loading">

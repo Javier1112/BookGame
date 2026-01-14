@@ -60,7 +60,7 @@ const StartScreen = ({
               filter: "drop-shadow(4px 4px 0px #2a75bb)"
             }}
           >
-            {"SHNU PLAYBRARY".split("").map((char, index) => (
+            {"SHNU READING LIB".split("").map((char, index) => (
               <span
                 key={`${char}-${index}`}
                 className="sway-char"

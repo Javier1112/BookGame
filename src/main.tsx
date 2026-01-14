@@ -18,6 +18,7 @@ const App = () => {
     lastImageUrl,
     displayedSceneDescription,
     revealedOptions,
+    interactionLocked,
     startGame,
     chooseOption,
     resetGame
@@ -36,6 +37,7 @@ const App = () => {
     <GameScreen
       state={gameState}
       loading={loading}
+      interactionLocked={interactionLocked}
       lastImageUrl={lastImageUrl}
       displayedSceneDescription={displayedSceneDescription}
       revealedOptions={revealedOptions}

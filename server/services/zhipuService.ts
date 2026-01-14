@@ -26,7 +26,7 @@ const OPTION_TEXT_MAX_CHARS = Math.max(
   Number(process.env.ZHIPU_OPTION_TEXT_MAX_CHARS ?? 15)
 );
 const IMAGE_MODEL = process.env.ZHIPU_IMAGE_MODEL ?? "cogview-3-flash";
-const IMAGE_SIZE = process.env.ZHIPU_IMAGE_SIZE ?? "896x672";
+const IMAGE_SIZE = process.env.ZHIPU_IMAGE_SIZE ?? "1280x960";
 const IMAGE_TIMEOUT_MS = Number(process.env.ZHIPU_IMAGE_TIMEOUT_MS ?? 120000);
 const IMAGE_WATERMARK_ENABLED =
   (process.env.ZHIPU_IMAGE_WATERMARK_ENABLED ?? "false").toLowerCase() === "true";
@@ -50,7 +50,7 @@ const MAX_429_WAIT_MS = Math.max(
   Number(process.env.ZHIPU_MAX_429_WAIT_MS ?? 60000)
 );
 const IMAGE_STYLE_PREFIX =
-  process.env.ZHIPU_IMAGE_STYLE_PREFIX ?? "8-bit复古的SNES时代风格";
+  process.env.ZHIPU_IMAGE_STYLE_PREFIX ?? "16-bit像素艺术（pixel art），清晰硬边，低色彩调色板，复古RPG背景，横向构图，环境叙事"; 
 
 interface ZhipuStoryResponse {
   character_name: string;
@@ -141,7 +141,7 @@ const extractOptions = (
 
 const validateStoryResponse = (data: unknown): ZhipuStoryResponse => {
   if (!data || typeof data !== "object") {
-    throw new Error("故事响应格式异常：不是对象。");
+    throw new Error("故事生成的格式异常：不是对象。");
   }
 
   const obj = data as Record<string, unknown>;
@@ -172,7 +172,7 @@ const applyImageStyle = (prompt: string) => {
   if (trimmed.toLowerCase().startsWith(IMAGE_STYLE_PREFIX.toLowerCase())) {
     return trimmed;
   }
-  return `${IMAGE_STYLE_PREFIX}${trimmed}`;
+  return `${IMAGE_STYLE_PREFIX}，${trimmed}`;
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -306,6 +306,53 @@ export const createZhipuGameService = (
     return null;
   };
 
+  const describeError = (error: unknown) => {
+    if (error instanceof Error) {
+      const record = error as Error & {
+        code?: string | number;
+        errno?: string | number;
+        type?: string;
+        cause?: unknown;
+      };
+      const cause = record.cause;
+      let causeInfo: unknown = undefined;
+      if (cause instanceof Error) {
+        const causeRecord = cause as Error & {
+          code?: string | number;
+          errno?: string | number;
+          type?: string;
+        };
+        causeInfo = {
+          name: cause.name,
+          message: cause.message,
+          code: causeRecord.code,
+          errno: causeRecord.errno,
+          type: causeRecord.type
+        };
+      } else if (cause !== undefined) {
+        try {
+          causeInfo = JSON.parse(JSON.stringify(cause));
+        } catch {
+          causeInfo = String(cause);
+        }
+      }
+
+      return {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+        code: record.code,
+        errno: record.errno,
+        type: record.type,
+        cause: causeInfo
+      };
+    }
+
+    return {
+      message: String(error ?? "unknown")
+    };
+  };
+
   const fetchWithTimeout = async (
     url: string,
     options: RequestInit,
@@ -318,10 +365,18 @@ export const createZhipuGameService = (
     try {
       return await fetch(url, { ...options, signal: controller.signal });
     } catch (error) {
+      const details = describeError(error);
+      logJson("error", "zhipu_fetch_failed", {
+        label,
+        url,
+        method: options.method ?? "GET",
+        timeoutMs,
+        details
+      });
       const message =
         error instanceof Error ? error.message : String(error ?? "unknown");
       throw new Error(
-        `${label} 请求失败或超时（timeoutMs=${timeoutMs}）：${message}`
+        `${label} 请求失败 timeoutMs=${timeoutMs}??${message}`
       );
     } finally {
       clearTimeout(timeoutId);
@@ -520,7 +575,7 @@ ${protagonistRule}
 6）options 必须为 3 个互斥且可执行的具体动作，使用动词开头，每条不超过 ${OPTION_TEXT_MAX_CHARS} 字；禁止“继续/随便/不知道/以上都行/随机/跳过”等空泛选项出现；避免信息重复。
 7）你必须且只能输出一个 JSON 对象（不要 markdown、不要多余说明、不要代码块）。
 8）JSON 对象必须且只能包含以下键（严格一致），并且键顺序必须为：
-   - image_prompt: string（中文；只写画面视觉元素（人物/场景/动作/构图/光影/风格））
+   - image_prompt: string（中文；只写画面视觉元素（建筑/场景/天气/构图/光影/镜头））
    - character_name: string（中文）
    - scene_description: string（中文，不超过 ${SCENE_DESCRIPTION_MAX_CHARS} 字）
    - options: 长度为 3 的数组，每项为 {label: 'A'|'B'|'C', text: string（中文）}；如果 is_game_over=true 则可以返回 []

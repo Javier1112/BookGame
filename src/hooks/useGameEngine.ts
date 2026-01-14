@@ -17,8 +17,10 @@ export const useGameEngine = () => {
   const [displayedSceneDescription, setDisplayedSceneDescription] = useState("");
   const [revealedOptions, setRevealedOptions] = useState(0);
   const [isTypingComplete, setIsTypingComplete] = useState(false);
+  const [interactionLocked, setInteractionLocked] = useState(false);
   const requestIdRef = useRef(0);
   const inFlightRef = useRef(false);
+  const interactionLockedRef = useRef(false);
   const lastActionRef = useRef(0);
   const typingTimeoutRef = useRef<number | null>(null);
   const revealTimeoutRef = useRef<number | null>(null);
@@ -162,6 +164,8 @@ export const useGameEngine = () => {
         return;
       }
       inFlightRef.current = true;
+      interactionLockedRef.current = true;
+      setInteractionLocked(true);
       lastActionRef.current = now;
       setRevealedOptions(0);
       setIsTypingComplete(false);
@@ -233,6 +237,8 @@ export const useGameEngine = () => {
         if (requestId === requestIdRef.current) {
           setLoading(false);
           inFlightRef.current = false;
+          interactionLockedRef.current = false;
+          setInteractionLocked(false);
         }
       }
     },
@@ -242,7 +248,7 @@ export const useGameEngine = () => {
   const startGame = useCallback(
     (bookTitle: string) => {
       const sanitized = bookTitle.trim();
-      if (!sanitized || loading) {
+      if (!sanitized || loading || interactionLockedRef.current) {
         return;
       }
 
@@ -260,7 +266,12 @@ export const useGameEngine = () => {
 
   const chooseOption = useCallback(
     (option: GameOption) => {
-      if (!gameState || loading || gameState.isGameOver) {
+      if (
+        !gameState ||
+        loading ||
+        interactionLockedRef.current ||
+        gameState.isGameOver
+      ) {
         return;
       }
 
@@ -294,7 +305,9 @@ export const useGameEngine = () => {
     setDisplayedSceneDescription("");
     setRevealedOptions(0);
     setIsTypingComplete(false);
+    setInteractionLocked(false);
     inFlightRef.current = false;
+    interactionLockedRef.current = false;
     if (typingTimeoutRef.current) {
       window.clearTimeout(typingTimeoutRef.current);
       typingTimeoutRef.current = null;
@@ -314,6 +327,7 @@ export const useGameEngine = () => {
     lastImageUrl,
     displayedSceneDescription,
     revealedOptions,
+    interactionLocked,
     startGame,
     chooseOption,
     resetGame
